@@ -107,7 +107,7 @@ class ComposerStaticInit2afddca872debb107c6f707db04238aa
         array (
             'GuzzleHttp\\UriTemplate\\' => 23,
             'GrahamCampbell\\ResultType\\' => 26,
-            'Gohari\\RepoPattern\\' => 19,
+            'Gohari\\RepositoryPattern\\' => 25,
         ),
         'F' => 
         array (
@@ -334,7 +334,7 @@ class ComposerStaticInit2afddca872debb107c6f707db04238aa
         array (
             0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
         ),
-        'Gohari\\RepoPattern\\' => 
+        'Gohari\\RepositoryPattern\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),

@@ -2,104 +2,82 @@
 
 namespace Gohari\RepositoryPattern;
 
-/******************************************************
- * @class BaseRepository
- *  In this class we create our popular methods
- *  such as get all data , find by id and CRUD actions
- *******************************************************/
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+
 class BaseRepository implements BaseRepositoryInterface
 {
-    /***************************************
-     * @var Model $currentModel
-     *  define model type with this property
-     ****************************************/
-    private $model;
-
-    /********************************************************
-     * @param Model $model
-     * We use the constructor for repository constructor type
-     * So with constructor we can assign your select model
-     *********************************************************/
-    public function __construct($model)
+    public function __construct(protected Model $model)
     {
-        $this->model = $model;
     }
 
-    /***************
-     * @return Model
-     */
-    public function query()
+    public function query(): Builder
     {
-        return $this->model;
+        return $this->model->newQuery();
     }
 
-    /************************
-     * @method  array|Collection|\Illuminate\Support\Collection getAll()
-     *  get all of your model
-     ************************/
-    public function getAll()
+    public function getAll(array $columns = ['*']): Collection
     {
-        return $this->model->get();
+        return $this->query()->get($columns);
     }
 
-    /*************************
-     * @method Model|array|Collection|null findById()
-     * @param $id
-     * find your select method
-     *************************/
-    public function findById($id)
+    public function paginate(int $perPage = 15, array $columns = ['*']): LengthAwarePaginator
     {
-        return $this->model->find($id);
+        return $this->query()->paginate($perPage, $columns);
     }
 
-
-    /******************************
-     * @method Model insertData()
-     * @param $data
-     * new instance of your model
-     ******************************/
-    public function insertData($data)
+    public function findById(int|string $id, array $columns = ['*']): ?Model
     {
-        return $this->model->create($data);
+        return $this->query()->find($id, $columns);
     }
 
-    /*******************************
-     * update your instance of model
-     * @method bool updateData()
-     * @param $identity
-     * @param $data
-     * @return bool
-     *******************************/
-    public function updateItem($identity, $data): bool
+    public function findOrFail(int|string $id, array $columns = ['*']): Model
     {
-        $model = $this->model->find($identity);
-        foreach ($data as $key => $value) {
-            $model[$key] = $value;
-        }
-        return $model->save();
+        return $this->query()->findOrFail($id, $columns);
     }
 
-    /*******************************
-     * drop instance of model
-     * @method bool deleteData()
-     * @param int $identity
-     *******************************/
-    public function deleteData($identity): ?bool
+    public function create(array $data): Model
     {
-        $model = $this->model->find($identity);
-        if (!@$model)
+        return $this->query()->create($data);
+    }
+
+    public function update(int|string $id, array $data): bool
+    {
+        $model = $this->findById($id);
+
+        if (! $model) {
             return false;
-        return $model->delete();
+        }
+
+        return $model->fill($data)->save();
     }
 
-    /*******************************************
-     * Dynamic Search by table column and value
-     * @param $column
-     * @param $value
-     * @return Model|Builder
-     ********************************************/
-    public function searchByColumn($column, $value)
+    public function delete(int|string $id): bool
     {
-        return $this->model->where($column, 'like', '%' . $value . '%');
+        $model = $this->findById($id);
+
+        return $model ? (bool) $model->delete() : false;
+    }
+
+    public function searchByColumn(string $column, mixed $value): Builder
+    {
+        return $this->query()->where($column, 'like', '%'.$value.'%');
+    }
+
+    public function insertData(array $data): Model
+    {
+        return $this->create($data);
+    }
+
+    public function updateItem(int|string $identity, array $data): bool
+    {
+        return $this->update($identity, $data);
+    }
+
+    public function deleteData(int|string $identity): bool
+    {
+        return $this->delete($identity);
     }
 }

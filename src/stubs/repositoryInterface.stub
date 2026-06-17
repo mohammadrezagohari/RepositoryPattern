@@ -1,8 +1,10 @@
 <?php
 
-namespace DeveloperGohari\RepositoryPattern\Repositories\{{className}};
+namespace {{ namespace }};
+
 use Gohari\RepositoryPattern\BaseRepositoryInterface;
-interface {{className}}RepositoryInterface extends BaseRepositoryInterface
+
+interface {{ interface }} extends BaseRepositoryInterface
 {
-    // Declare your methods interface here
+    //
 }

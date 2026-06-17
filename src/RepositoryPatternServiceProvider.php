@@ -2,17 +2,22 @@
 
 namespace Gohari\RepositoryPattern;
 
+use Gohari\RepositoryPattern\Commands\MakeRepositoryCommand;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryPatternServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
-        // Register any bindings or dependencies here
+        //
     }
 
-    public function boot()
+    public function boot(): void
     {
-        // Define any routes or other bootstrapping tasks here
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                MakeRepositoryCommand::class,
+            ]);
+        }
     }
 }

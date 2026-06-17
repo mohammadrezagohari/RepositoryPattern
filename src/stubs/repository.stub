@@ -1,21 +1,14 @@
-namespace Gohari\RepositoryPattern\Repositories\{{className}};
+<?php
+
+namespace {{ namespace }};
+
 use Gohari\RepositoryPattern\BaseRepository;
-use App\Models\{{className}};
+use {{ modelClass }};
 
-class {{className}}Repository extends BaseRepository implements {{className}}RepositoryInterface
+class {{ repository }} extends BaseRepository implements {{ interface }}
 {
-      /***********************
-     * @var $model
-     ***********************/
-    protected $model;
-
-    /**************************************
-     * @param $model
-     * pass our model to the BaseRepository
-     **************************************/
-    public function __construct($model)
+    public function __construct({{ model }} ${{ modelVariable }})
     {
-        parent::__construct($model);
-        $this->model = $model;
+        parent::__construct(${{ modelVariable }});
     }
 }
