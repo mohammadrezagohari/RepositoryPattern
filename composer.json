@@ -1,6 +1,7 @@
 {
     "name": "gohari/repository-pattern",
     "description": "A Laravel package for generating and using the repository pattern.",
+    "type": "library",
     "license": "MIT",
     "keywords": [
         "laravel",
