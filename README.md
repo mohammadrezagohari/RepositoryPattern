@@ -17,8 +17,8 @@ Build clean repositories for Laravel models with one Artisan command.
 
 ## Requirements
 
-- PHP `^8.1`
-- Laravel `^10.0`, `^11.0`, or `^12.0`
+- PHP `^8.3`
+- Laravel `^10.0`, `^11.0`, `^12.0`, or `^13.0`
 
 ## Installation
 
@@ -262,7 +262,7 @@ composer install
 Before tagging a release, run:
 
 ```bash
-composer validate --strict
+composer validate --strict --no-check-lock
 composer test
 ```
 
