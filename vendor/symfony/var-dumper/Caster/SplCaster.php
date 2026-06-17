@@ -141,7 +141,7 @@ class SplCaster
         }
 
         if (isset($a[$prefix.'perms'])) {
-            $a[$prefix.'perms'] = new ConstStub(sprintf('0%o', $a[$prefix.'perms']), $a[$prefix.'perms']);
+            $a[$prefix.'perms'] = new ConstStub(\sprintf('0%o', $a[$prefix.'perms']), $a[$prefix.'perms']);
         }
 
         static $mapDate = ['aTime', 'mTime', 'cTime'];
@@ -208,7 +208,7 @@ class SplCaster
             $storage[] = new EnumStub([
                 'object' => $obj,
                 'info' => $clone->getInfo(),
-             ]);
+            ]);
         }
 
         $a += [
@@ -249,7 +249,7 @@ class SplCaster
             $map[] = new EnumStub([
                 'object' => $obj,
                 'data' => $data,
-             ]);
+            ]);
         }
 
         $a += [
@@ -269,7 +269,11 @@ class SplCaster
             $a = Caster::castObject($c, $c::class, method_exists($c, '__debugInfo'), $stub->class);
             $c->setFlags($flags);
         }
+
+        unset($a["\0ArrayObject\0storage"], $a["\0ArrayIterator\0storage"]);
+
         $a += [
+            $prefix.'storage' => $c->getArrayCopy(),
             $prefix.'flag::STD_PROP_LIST' => (bool) ($flags & \ArrayObject::STD_PROP_LIST),
             $prefix.'flag::ARRAY_AS_PROPS' => (bool) ($flags & \ArrayObject::ARRAY_AS_PROPS),
         ];

@@ -225,6 +225,16 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
+## Testing
+
+Run the package test suite with:
+
+```bash
+composer test
+```
+
+The tests cover the repository generator command, package service provider registration, and the shared `BaseRepository` CRUD/query behavior.
+
 ## License
 
 The MIT License. See `LICENSE` for more information.

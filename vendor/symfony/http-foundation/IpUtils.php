@@ -29,8 +29,13 @@ class IpUtils
         '::1/128',        // Loopback
         'fc00::/7',       // Unique Local Address
         'fe80::/10',      // Link Local Address
-        '::ffff:0:0/96',  // IPv4 translations
+        '::ffff:0:0/96',  // IPv4-mapped IPv6 addresses (RFC 4291 section 2.5.5.2)
         '::/128',         // Unspecified address
+        '::/96',          // IPv4-compatible IPv6 addresses (RFC 4291 section 2.5.5.1)
+        '2002::/16',      // 6to4 (RFC 3056)
+        '2001::/32',      // Teredo tunneling (RFC 4380)
+        '64:ff9b::/96',   // NAT64 well-known prefix (RFC 6052)
+        '64:ff9b:1::/48', // NAT64 local-use prefix (RFC 8215)
     ];
 
     private static array $checkedIps = [];
@@ -102,7 +107,7 @@ class IpUtils
             return self::setCacheResult($cacheKey, false);
         }
 
-        return self::setCacheResult($cacheKey, 0 === substr_compare(sprintf('%032b', ip2long($requestIp)), sprintf('%032b', ip2long($address)), 0, $netmask));
+        return self::setCacheResult($cacheKey, 0 === substr_compare(\sprintf('%032b', ip2long($requestIp)), \sprintf('%032b', ip2long($address)), 0, $netmask));
     }
 
     /**
@@ -182,6 +187,16 @@ class IpUtils
      */
     public static function anonymize(string $ip): string
     {
+        /*
+         * If the IP contains a % symbol, then it is a local-link address with scoping according to RFC 4007
+         * In that case, we only care about the part before the % symbol, as the following functions, can only work with
+         * the IP address itself. As the scope can leak information (containing interface name), we do not want to
+         * include it in our anonymized IP data.
+         */
+        if (str_contains($ip, '%')) {
+            $ip = substr($ip, 0, strpos($ip, '%'));
+        }
+
         $wrappedIPv6 = false;
         if (str_starts_with($ip, '[') && str_ends_with($ip, ']')) {
             $wrappedIPv6 = true;
