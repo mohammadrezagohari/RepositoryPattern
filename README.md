@@ -1,23 +1,24 @@
-# Laravel Repository Pattern
+# Gohari Laravel Repository Pattern
 
 Build clean repositories for Laravel models with one Artisan command.
 
-`gohari/repository-pattern` gives you a reusable `BaseRepository`, a matching `BaseRepositoryInterface`, and a generator command that creates repository classes inside the Laravel app that installs your package.
+`gohari/repository-pattern` provides a reusable `BaseRepository`, a matching `BaseRepositoryInterface`, and a generator command that creates repository classes inside the Laravel application that installs your package.
 
 ## Features
 
 - Artisan repository generator
 - Automatic Laravel package discovery
-- Automatic model creation for `App\Models\...` models
+- Automatic model creation for missing `App\Models\...` classes
 - Repository and interface stubs
 - Custom output path support
 - Shared base methods for common Eloquent operations
 - Backward-compatible method aliases like `insertData`, `updateItem`, and `deleteData`
+- PHPUnit and Orchestra Testbench coverage for package behavior
 
 ## Requirements
 
 - PHP `^8.1`
-- Laravel `^10.0`
+- Laravel `^10.0`, `^11.0`, or `^12.0`
 
 ## Installation
 
@@ -33,7 +34,13 @@ Laravel will discover the service provider automatically:
 Gohari\RepositoryPattern\RepositoryPatternServiceProvider::class
 ```
 
-If package discovery is disabled in your app, register the provider manually in `config/app.php`.
+If package discovery is disabled in your app, register the provider manually in `config/app.php`:
+
+```php
+'providers' => [
+    Gohari\RepositoryPattern\RepositoryPatternServiceProvider::class,
+],
+```
 
 ## Quick Start
 
@@ -58,12 +65,21 @@ If `App\Models\User` does not exist, the package will create it with Laravel's `
 php artisan repository:make {name} --model={model}
 ```
 
+Arguments and options:
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `name` | Yes | Repository name. `User` and `UserRepository` both generate `UserRepository`. |
+| `--model` | No | Model class name or FQCN. Defaults to the repository name. |
+| `--path` | No | Output directory. Defaults to `app/Repositories`. |
+| `--force` | No | Overwrite existing repository files. |
+
 Examples:
 
 ```bash
 php artisan repository:make User --model=User
 php artisan repository:make UserRepository --model=User
-php artisan repository:make Product --model=App\\Models\\Product
+php artisan repository:make Product --model="App\Models\Product"
 php artisan repository:make Admin/User --model=User
 ```
 
@@ -78,6 +94,8 @@ Overwrite existing files:
 ```bash
 php artisan repository:make Product --model=Product --force
 ```
+
+For fully-qualified model classes outside `App\Models`, the command will warn you if the model file is missing, but it will not generate it automatically.
 
 ## Generated Repository
 
@@ -186,6 +204,8 @@ class UserService
 Add domain-specific methods to the interface:
 
 ```php
+use Gohari\RepositoryPattern\BaseRepositoryInterface;
+
 interface UserRepositoryInterface extends BaseRepositoryInterface
 {
     public function findByEmail(string $email);
@@ -195,6 +215,9 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
 Then implement them in the repository:
 
 ```php
+use App\Models\User;
+use Gohari\RepositoryPattern\BaseRepository;
+
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
     public function __construct(User $user)
@@ -209,13 +232,38 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 }
 ```
 
-## Publishing
+## Testing
 
-This package is designed to be published as a normal Composer package. Before tagging a release, run:
+Install development dependencies and run the package test suite:
+
+```bash
+composer install
+composer test
+```
+
+The tests cover:
+
+- Repository generator command
+- Package service provider command registration
+- Generated repository and interface contents
+- Missing model generation for `App\Models`
+- `--force` overwrite behavior
+- Shared `BaseRepository` CRUD/query behavior
+- Legacy aliases: `insertData`, `updateItem`, `deleteData`
+
+## Package Development
+
+For packages, `vendor/` and `composer.lock` should stay out of the repository. Install dependencies locally when developing:
+
+```bash
+composer install
+```
+
+Before tagging a release, run:
 
 ```bash
 composer validate --strict
-composer dump-autoload
+composer test
 ```
 
 For Packagist, push your repository to GitHub, submit the package, and tag releases with semantic versions:
@@ -224,16 +272,6 @@ For Packagist, push your repository to GitHub, submit the package, and tag relea
 git tag v1.0.0
 git push origin v1.0.0
 ```
-
-## Testing
-
-Run the package test suite with:
-
-```bash
-composer test
-```
-
-The tests cover the repository generator command, package service provider registration, and the shared `BaseRepository` CRUD/query behavior.
 
 ## License
 
