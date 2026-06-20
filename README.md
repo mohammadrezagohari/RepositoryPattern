@@ -6,6 +6,8 @@ Build clean repositories for Laravel models with one Artisan command.
 
 Current release: `v1.1.0`
 
+Documentation: [mohammadrezagohari.github.io/RepositoryPattern](https://mohammadrezagohari.github.io/RepositoryPattern/)
+
 ## Features
 
 - Artisan repository and service layer generator
