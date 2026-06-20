@@ -5,3 +5,6 @@ composer.lock
 .idea
 .vscode
 .DS_Store
+"/vendor/"  echo "/composer.lock"   git rm -r --cached vendor git rm --cached composer.lock  git add .gitignore git commit -m "Remove vendor and composer lock from package repository"
+"/vendor/" 
+"/composer.lock" 
