@@ -1,51 +1,49 @@
 {
-    "name": "gohari/repository-pattern",
-    "description": "A Laravel package for generating and using the repository pattern.",
-    "type": "library",
-    "license": "MIT",
-    "keywords": [
-        "laravel",
-        "repository",
-        "repository-pattern",
-        "eloquent",
-        "artisan-command"
-    ],
-    "autoload": {
-        "psr-4": {
-            "Gohari\\RepositoryPattern\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "MohammadReza Gohari",
-            "email": "eng.mr.gohari@gmail.com"
-        }
-    ],
-    "require": {
-        "php": "^8.3",
-        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
-        "illuminate/console": "^10.0|^11.0|^12.0|^13.0"
-    },
-    "require-dev": {
-        "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
-        "phpunit/phpunit": "^10.0|^11.0|^12.0"
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Gohari\\RepositoryPattern\\Tests\\": "tests/"
-        }
-    },
-    "scripts": {
-        "test": "@php vendor/bin/phpunit"
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Gohari\\RepositoryPattern\\RepositoryPatternServiceProvider"
-            ]
-        }
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+  "name": "gohari/repository-pattern",
+  "description": "A Laravel package to generate and use clean repository pattern classes with Artisan commands.",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "laravel",
+    "repository",
+    "repository-pattern",
+    "eloquent",
+    "artisan",
+    "php"
+  ],
+  "require": {
+    "php": "^8.1|^8.2|^8.3|^8.4",
+    "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
+    "illuminate/support": "^10.0|^11.0|^12.0|^13.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+    "phpunit/phpunit": "^10.0|^11.0|^12.0",
+    "larastan/larastan": "^2.0|^3.0",
+    "laravel/pint": "^1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Gohari\\RepositoryPattern\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Gohari\\RepositoryPattern\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "analyse": "vendor/bin/phpstan analyse",
+    "format": "vendor/bin/pint",
+    "format:test": "vendor/bin/pint --test"
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Gohari\\RepositoryPattern\\RepositoryPatternServiceProvider"
+      ]
+    }
+  }
 }

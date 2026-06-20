@@ -1,0 +1,73 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ dtoClass }};
+use {{ repositoryInterfaceClass }};
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
+
+class {{ service }} implements {{ interface }}
+{
+    public function __construct(private readonly {{ repositoryInterface }} ${{ repositoryVariable }})
+    {
+    }
+
+    public function paginate(
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc',
+        int $perPage = 15
+    ): LengthAwarePaginator {
+        $query = $this->{{ repositoryVariable }}->query();
+
+        if ($relations !== []) {
+            $query->with($relations);
+        }
+
+        if ($sortBy !== null) {
+            $query->orderBy($sortBy, strtolower($sortDirection) === 'desc' ? 'desc' : 'asc');
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    public function find(int|string $id, array $relations = []): ?Model
+    {
+        $query = $relations === []
+            ? $this->{{ repositoryVariable }}->query()
+            : $this->{{ repositoryVariable }}->withRelations($relations);
+
+        return $query->find($id);
+    }
+
+    public function create({{ dto }}|array $data): Model
+    {
+        return $this->{{ repositoryVariable }}->create($this->payload($data));
+    }
+
+    public function update(int|string $id, {{ dto }}|array $data): bool
+    {
+        return $this->{{ repositoryVariable }}->update($id, $this->payload($data));
+    }
+
+    public function delete(int|string $id): bool
+    {
+        return $this->{{ repositoryVariable }}->delete($id);
+    }
+
+    public function restore(int|string $id): bool
+    {
+        return $this->{{ repositoryVariable }}->restore($id);
+    }
+
+    public function forceDelete(int|string $id): bool
+    {
+        return $this->{{ repositoryVariable }}->forceDelete($id);
+    }
+
+    private function payload({{ dto }}|array $data): array
+    {
+        return $data instanceof {{ dto }} ? $data->toArray() : $data;
+    }
+}

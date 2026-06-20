@@ -1,0 +1,20 @@
+<?php
+
+namespace {{ namespace }};
+
+class {{ dto }}
+{
+    public function __construct(private readonly array $attributes)
+    {
+    }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self($attributes);
+    }
+
+    public function toArray(): array
+    {
+        return $this->attributes;
+    }
+}

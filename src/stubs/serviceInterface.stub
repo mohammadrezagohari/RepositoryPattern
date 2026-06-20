@@ -1,0 +1,29 @@
+<?php
+
+namespace {{ namespace }};
+
+use {{ dtoClass }};
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
+
+interface {{ interface }}
+{
+    public function paginate(
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc',
+        int $perPage = 15
+    ): LengthAwarePaginator;
+
+    public function find(int|string $id, array $relations = []): ?Model;
+
+    public function create({{ dto }}|array $data): Model;
+
+    public function update(int|string $id, {{ dto }}|array $data): bool;
+
+    public function delete(int|string $id): bool;
+
+    public function restore(int|string $id): bool;
+
+    public function forceDelete(int|string $id): bool;
+}
