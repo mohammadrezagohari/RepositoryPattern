@@ -88,6 +88,7 @@
             flex-direction: column;
             gap: 2px;
             min-width: 220px;
+            max-width: 100%;
         }
 
         .brand strong {
@@ -145,7 +146,7 @@
 
         .intro {
             display: grid;
-            grid-template-columns: 1.4fr 0.8fr;
+            grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
             gap: 32px;
             align-items: start;
             padding: 24px 0 34px;
@@ -186,6 +187,7 @@
         }
 
         .quick-panel {
+            min-width: 0;
             border: 1px solid var(--line);
             background: var(--panel);
             border-radius: 8px;
@@ -204,7 +206,7 @@
 
         .layout {
             display: grid;
-            grid-template-columns: 220px 1fr;
+            grid-template-columns: 220px minmax(0, 1fr);
             gap: 28px;
             align-items: start;
         }
@@ -244,6 +246,7 @@
         }
 
         section {
+            min-width: 0;
             margin-bottom: 34px;
             border: 1px solid var(--line);
             background: var(--panel);
@@ -330,6 +333,8 @@
 
         .code-wrap {
             position: relative;
+            min-width: 0;
+            max-width: 100%;
             margin: 14px 0 18px;
         }
 
@@ -370,6 +375,7 @@
             border-radius: 5px;
             background: var(--panel-soft);
             color: var(--text);
+            overflow-wrap: anywhere;
         }
 
         table {
@@ -424,7 +430,7 @@
         @media (max-width: 900px) {
             .intro,
             .layout {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
             }
 
             .sidebar {
@@ -437,17 +443,75 @@
         }
 
         @media (max-width: 640px) {
+            .topbar {
+                position: static;
+            }
+
             .topbar-inner {
                 align-items: flex-start;
                 flex-direction: column;
+                gap: 10px;
+                width: min(1180px, calc(100% - 24px));
+                padding: 12px 0;
+            }
+
+            .brand {
+                min-width: 0;
             }
 
             .nav {
+                width: 100%;
+                gap: 4px;
                 justify-content: flex-start;
             }
 
+            .nav a,
+            .theme-toggle {
+                padding: 6px 8px;
+            }
+
+            .wrap {
+                width: min(1180px, calc(100% - 24px));
+                padding: 24px 0 40px;
+            }
+
+            .intro {
+                gap: 20px;
+                padding: 12px 0 24px;
+            }
+
+            h1 {
+                font-size: clamp(30px, 10vw, 40px);
+            }
+
+            .lead {
+                font-size: 17px;
+            }
+
             section {
-                padding: 18px;
+                padding: 16px;
+            }
+
+            table {
+                display: block;
+                max-width: 100%;
+                overflow-x: auto;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            td {
+                white-space: normal;
+                min-width: 130px;
+            }
+
+            pre {
+                max-width: 100%;
+                padding: 14px;
+            }
+
+            .code-wrap pre {
+                padding-top: 44px;
             }
         }
     </style>
