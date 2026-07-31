@@ -12,7 +12,8 @@ interface {{ interface }}
         array $relations = [],
         ?string $sortBy = null,
         string $sortDirection = 'asc',
-        int $perPage = 15
+        int $perPage = 15,
+        int $page = 1
     ): LengthAwarePaginator;
 
     public function find(int|string $id, array $relations = []): ?Model;

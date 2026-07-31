@@ -187,7 +187,7 @@ Every generated repository extends `BaseRepository`, so these methods are availa
 ```php
 $repository->query();
 $repository->getAll();
-$repository->paginate(15);
+$repository->paginate(perPage: 15, page: 2);
 $repository->findById($id);
 $repository->findOrFail($id);
 $repository->firstWhere('email', 'user@example.com');
@@ -240,7 +240,7 @@ config/repository-pattern.php
 The generated service supports pagination with relationships and sorting, plus create/update through a DTO or array:
 
 ```php
-$users->paginate(['roles'], 'created_at', 'desc', 20);
+$users->paginate(['roles'], 'created_at', 'desc', 20, 2);
 $users->find($id, ['profile']);
 $users->create(UserData::fromArray($data));
 $users->restore($id);

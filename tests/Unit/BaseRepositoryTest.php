@@ -42,12 +42,15 @@ class BaseRepositoryTest extends TestCase
     {
         TestUser::query()->create(['name' => 'Ali', 'email' => 'ali@example.com']);
         TestUser::query()->create(['name' => 'Sara', 'email' => 'sara@example.com']);
+        TestUser::query()->create(['name' => 'Reza', 'email' => 'reza@example.com']);
 
-        $users = $this->repository->paginate(1);
+        $users = $this->repository->paginate(1, ['*'], 2);
 
         $this->assertInstanceOf(LengthAwarePaginator::class, $users);
         $this->assertSame(1, $users->perPage());
-        $this->assertSame(2, $users->total());
+        $this->assertSame(2, $users->currentPage());
+        $this->assertSame(3, $users->total());
+        $this->assertSame('Sara', $users->items()[0]->getAttribute('name'));
     }
 
     public function test_it_finds_a_model_by_id(): void

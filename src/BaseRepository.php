@@ -24,9 +24,9 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->query()->get($columns);
     }
 
-    public function paginate(int $perPage = 15, array $columns = ['*']): LengthAwarePaginator
+    public function paginate(int $perPage = 15, array $columns = ['*'], int $page = 1): LengthAwarePaginator
     {
-        return $this->query()->paginate($perPage, $columns);
+        return $this->query()->paginate($perPage, $columns, 'page', $page);
     }
 
     public function findById(int|string $id, array $columns = ['*']): ?Model

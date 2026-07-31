@@ -17,7 +17,8 @@ class {{ service }} implements {{ interface }}
         array $relations = [],
         ?string $sortBy = null,
         string $sortDirection = 'asc',
-        int $perPage = 15
+        int $perPage = 15,
+        int $page = 1
     ): LengthAwarePaginator {
         $query = $this->{{ repositoryVariable }}->query();
 
@@ -29,7 +30,7 @@ class {{ service }} implements {{ interface }}
             $query->orderBy($sortBy, strtolower($sortDirection) === 'desc' ? 'desc' : 'asc');
         }
 
-        return $query->paginate($perPage);
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function find(int|string $id, array $relations = []): ?Model
