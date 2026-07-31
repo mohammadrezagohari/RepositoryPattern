@@ -4,7 +4,7 @@ Build clean repositories for Laravel models with one Artisan command.
 
 `gohari/repository-pattern` provides a reusable `BaseRepository`, a matching `BaseRepositoryInterface`, and a generator command that creates repository classes inside the Laravel application that installs your package.
 
-Current release: `v1.1.0`
+Current release: `v2.0.0`
 
 Documentation: [mohammadrezagohari.github.io/RepositoryPattern](https://mohammadrezagohari.github.io/RepositoryPattern/)
 
@@ -16,7 +16,7 @@ Documentation: [mohammadrezagohari.github.io/RepositoryPattern](https://mohammad
 - Repository and interface stubs
 - Custom output path support
 - Optional automatic interface binding
-- Optional Service, ServiceInterface, DTO, and config generation
+- Optional Service, ServiceInterface, model-aware DTO, and config generation
 - Relationship loading, sorting, and soft delete helpers
 - Shared base methods for common Eloquent operations
 - Backward-compatible method aliases like `insertData`, `updateItem`, and `deleteData`
@@ -188,6 +188,7 @@ Every generated repository extends `BaseRepository`, so these methods are availa
 $repository->query();
 $repository->getAll();
 $repository->paginate(perPage: 15, page: 2);
+$repository->bigDataPaginate(perPage: 100, cursor: $cursor);
 $repository->findById($id);
 $repository->findOrFail($id);
 $repository->firstWhere('email', 'user@example.com');
@@ -237,15 +238,53 @@ app/DTOs/UserData.php
 config/repository-pattern.php
 ```
 
-The generated service supports pagination with relationships and sorting, plus create/update through a DTO or array:
+The generated service only forwards pagination and lookup arguments to the repository. Query construction, relationships, sorting, and database access stay in the repository:
 
 ```php
 $users->paginate(['roles'], 'created_at', 'desc', 20, 2);
+$users->bigDataPaginate(['roles'], 'id', 'asc', 100, $cursor);
 $users->find($id, ['profile']);
 $users->create(UserData::fromArray($data));
 $users->restore($id);
 $users->forceDelete($id);
 ```
+
+### Pagination for Million-Row Tables
+
+`bigDataPaginate` uses Laravel cursor pagination instead of offset pagination. It is intended for large tables and next/previous or infinite-scroll interfaces:
+
+```php
+$users = $userService->bigDataPaginate(
+    relations: ['roles'],
+    sortBy: 'id',
+    sortDirection: 'asc',
+    perPage: 100,
+    cursor: request()->query('cursor')
+);
+```
+
+The JSON response contains `next_cursor` and `prev_cursor`; pass one of them as the next request's `cursor`. Cursor pagination does not provide page numbers or a total row count. For best performance, use an indexed, non-null sort column. The repository automatically adds the model primary key as a stable tie-breaker when needed. If you pass a custom `$columns` selection directly to the repository, include every sorted column and the primary key.
+
+Use `chunkById` or `lazyById` for background jobs that must process an entire table; they are not replacements for API/UI pagination.
+
+### Model-Aware DTO Generation
+
+When the model defines `$fillable`, the generator creates matching public readonly DTO fields. Primitive model casts are used for safe PHP types:
+
+```php
+class User extends Model
+{
+    protected $fillable = ['name', 'age', 'is_active', 'settings'];
+
+    protected $casts = [
+        'age' => 'integer',
+        'is_active' => 'boolean',
+        'settings' => 'array',
+    ];
+}
+```
+
+The generated `UserData` exposes `name`, `age`, `is_active`, and `settings`, and its `toArray()` method only returns provided fillable fields. Unknown input is discarded while explicitly provided `null` values are preserved. Fields without a safe primitive cast use `mixed`. If the model has no `$fillable` fields, the original generic array DTO is generated unchanged.
 
 ## Binding Interfaces
 
@@ -392,8 +431,8 @@ composer format:test
 For Packagist, push your repository to GitHub, submit the package, and tag releases with semantic versions:
 
 ```bash
-git tag v1.1.0
-git push origin v1.1.0
+git tag v2.0.0
+git push origin v2.0.0
 ```
 
 ## Security

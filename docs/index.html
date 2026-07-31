@@ -521,7 +521,7 @@
         <div class="topbar-inner">
             <div class="brand">
                 <strong>Gohari Repository Pattern</strong>
-                <span>Laravel package documentation · v1.1.0</span>
+                <span>Laravel package documentation · v2.0.0</span>
             </div>
 
             <nav class="nav" aria-label="Primary navigation">
@@ -732,6 +732,7 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
                     <pre><code>$repository->query();
 $repository->getAll();
 $repository->paginate(perPage: 15, page: 2);
+$repository->bigDataPaginate(perPage: 100, cursor: $cursor);
 $repository->findById($id);
 $repository->findOrFail($id);
 $repository->firstWhere('email', 'user@example.com');
@@ -765,12 +766,17 @@ app/Services/UserService.php
 app/Services/UserServiceInterface.php
 app/DTOs/UserData.php
 config/repository-pattern.php</code></pre>
-                    <p>The generated service supports relationships, sorting, DTO-based create/update, restore, and force delete:</p>
+                    <p>The generated service only forwards arguments. Query construction, relationships, sorting, and database access stay in the repository:</p>
                     <pre><code>$users->paginate(['roles'], 'created_at', 'desc', 20, 2);
+$users->bigDataPaginate(['roles'], 'id', 'asc', 100, $cursor);
 $users->find($id, ['profile']);
 $users->create(UserData::fromArray($data));
 $users->restore($id);
 $users->forceDelete($id);</code></pre>
+                    <h3>Million-row pagination</h3>
+                    <p><code>bigDataPaginate</code> uses cursor pagination for efficient next/previous navigation on large indexed tables. Pass the response's <code>next_cursor</code> or <code>prev_cursor</code> into the next request. It intentionally does not calculate a total count or expose page numbers. Use <code>chunkById</code> or <code>lazyById</code> for background processing of an entire table, not UI pagination.</p>
+                    <h3>Model-aware DTO generation</h3>
+                    <p>When a model defines <code>$fillable</code>, the generator creates matching public readonly DTO fields and uses primitive model casts for safe PHP types. Unknown input fields are discarded, explicitly provided null values remain in <code>toArray()</code>, and fields without a safe cast use <code>mixed</code>. If the model has no fillable fields, the original generic array DTO is generated unchanged.</p>
                     <p>When binding is enabled, the command creates or updates <code>app/Providers/RepositoryServiceProvider.php</code>:</p>
                     <pre><code>public function register(): void
 {
@@ -988,6 +994,7 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
                     <pre><code>$repository->query();
 $repository->getAll();
 $repository->paginate(perPage: 15, page: 2);
+$repository->bigDataPaginate(perPage: 100, cursor: $cursor);
 $repository->findById($id);
 $repository->findOrFail($id);
 $repository->firstWhere('email', 'user@example.com');
@@ -1021,12 +1028,17 @@ app/Services/UserService.php
 app/Services/UserServiceInterface.php
 app/DTOs/UserData.php
 config/repository-pattern.php</code></pre>
-                    <p>Service تولید شده pagination همراه relationship و sorting، عملیات create/update با DTO یا array، و soft delete را پوشش می‌دهد:</p>
+                    <p>Service تولیدشده فقط ورودی‌ها را پاس می‌دهد؛ ساخت query، relationship، sorting و دسترسی دیتابیس داخل Repository انجام می‌شود:</p>
                     <pre><code>$users->paginate(['roles'], 'created_at', 'desc', 20, 2);
+$users->bigDataPaginate(['roles'], 'id', 'asc', 100, $cursor);
 $users->find($id, ['profile']);
 $users->create(UserData::fromArray($data));
 $users->restore($id);
 $users->forceDelete($id);</code></pre>
+                    <h3>Pagination برای جدول‌های میلیونی</h3>
+                    <p><code>bigDataPaginate</code> از cursor pagination برای حرکت به صفحه بعد و قبل روی جدول‌های بزرگ و index‌شده استفاده می‌کند. مقدار <code>next_cursor</code> یا <code>prev_cursor</code> پاسخ را در درخواست بعدی بفرستید. این روش عمداً total count و شماره صفحه تولید نمی‌کند. برای پردازش background کل جدول از <code>chunkById</code> یا <code>lazyById</code> استفاده کنید، نه برای pagination رابط کاربری.</p>
+                    <h3>ساخت DTO از روی Model</h3>
+                    <p>اگر Model دارای <code>$fillable</code> باشد، generator برای همان فیلدها propertyهای public readonly می‌سازد و برای castهای ساده type مناسب قرار می‌دهد. ورودی‌های ناشناس حذف می‌شوند، nullهای ارسال‌شده در <code>toArray()</code> حفظ می‌شوند و castهای نامطمئن از نوع <code>mixed</code> خواهند بود. اگر Model هیچ fillable نداشته باشد، DTO عمومی آرایه‌ای قبلی بدون تغییر ساخته می‌شود.</p>
                     <p>وقتی binding فعال باشد، فایل <code>app/Providers/RepositoryServiceProvider.php</code> ساخته یا به‌روزرسانی می‌شود:</p>
                     <pre><code>public function register(): void
 {
@@ -1094,7 +1106,7 @@ composer format:test</code></pre>
 
     <footer>
         <div class="wrap">
-            Gohari Laravel Repository Pattern · Documentation for v1.1.0 · Created by
+            Gohari Laravel Repository Pattern · Documentation for v2.0.0 · Created by
             <a href="https://www.gandom.link/en/team/3/Mohamadreza%20Gohari">Mohamadreza Gohari</a>
             from
             <a href="https://www.gandom.link/en/team/3/Mohamadreza%20Gohari">Gandom Software Group</a>

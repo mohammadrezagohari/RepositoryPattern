@@ -9,6 +9,7 @@ use Gohari\RepositoryPattern\Tests\TestCase;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class BaseRepositoryTest extends TestCase
@@ -51,6 +52,46 @@ class BaseRepositoryTest extends TestCase
         $this->assertSame(2, $users->currentPage());
         $this->assertSame(3, $users->total());
         $this->assertSame('Sara', $users->items()[0]->getAttribute('name'));
+    }
+
+    public function test_it_applies_pagination_sorting_in_the_repository(): void
+    {
+        TestUser::query()->create(['name' => 'Ali', 'email' => 'ali@example.com']);
+        TestUser::query()->create(['name' => 'Sara', 'email' => 'sara@example.com']);
+        TestUser::query()->create(['name' => 'Reza', 'email' => 'reza@example.com']);
+
+        $users = $this->repository->paginate(
+            perPage: 2,
+            sortBy: 'name',
+            sortDirection: 'desc'
+        );
+
+        $this->assertSame(
+            ['Sara', 'Reza'],
+            array_map(fn (TestUser $user): string => (string) $user->getAttribute('name'), $users->items())
+        );
+    }
+
+    public function test_it_cursor_paginates_large_data_sets_with_a_stable_order(): void
+    {
+        foreach (range(1, 5) as $index) {
+            TestUser::query()->create([
+                'name' => 'Same name',
+                'email' => "user{$index}@example.com",
+            ]);
+        }
+
+        $firstPage = $this->repository->bigDataPaginate(perPage: 2, sortBy: 'name');
+        $secondPage = $this->repository->bigDataPaginate(
+            perPage: 2,
+            cursor: $firstPage->nextCursor()?->encode(),
+            sortBy: 'name'
+        );
+
+        $this->assertInstanceOf(CursorPaginator::class, $firstPage);
+        $this->assertSame([1, 2], array_column($firstPage->items(), 'id'));
+        $this->assertSame([3, 4], array_column($secondPage->items(), 'id'));
+        $this->assertNotNull($secondPage->nextCursor());
     }
 
     public function test_it_finds_a_model_by_id(): void

@@ -3,6 +3,7 @@
 namespace {{ namespace }};
 
 use {{ dtoClass }};
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +16,14 @@ interface {{ interface }}
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator;
+
+    public function bigDataPaginate(
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc',
+        int $perPage = 100,
+        ?string $cursor = null
+    ): CursorPaginator;
 
     public function find(int|string $id, array $relations = []): ?Model;
 

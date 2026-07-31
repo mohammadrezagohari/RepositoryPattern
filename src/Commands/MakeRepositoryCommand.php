@@ -3,8 +3,10 @@
 namespace Gohari\RepositoryPattern\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
+use Throwable;
 
 class MakeRepositoryCommand extends Command
 {
@@ -94,9 +96,9 @@ class MakeRepositoryCommand extends Command
         $this->line('Interface:  '.$interfacePath);
 
         if ($shouldGenerateService) {
-            $service = $this->generateServiceLayer($repositoryName, $interfaceNamespace);
+            $service = $this->generateServiceLayer($repositoryName, $interfaceNamespace, $model['class']);
         } elseif ($shouldGenerateDto) {
-            $this->generateDto($repositoryName);
+            $this->generateDto($repositoryName, $model['class']);
         }
 
         if ($shouldGenerateService || $this->option('config')) {
@@ -279,9 +281,12 @@ class MakeRepositoryCommand extends Command
     /**
      * @return array{namespace: string, service: string, interface: string}
      */
-    private function generateServiceLayer(string $repositoryName, string $repositoryInterfaceNamespace): array
-    {
-        $dto = $this->generateDto($repositoryName);
+    private function generateServiceLayer(
+        string $repositoryName,
+        string $repositoryInterfaceNamespace,
+        string $modelClass
+    ): array {
+        $dto = $this->generateDto($repositoryName, $modelClass);
         $serviceBasePath = $this->servicePath();
         $serviceNamespace = $this->serviceNamespace();
         $service = $repositoryName.'Service';
@@ -320,7 +325,7 @@ class MakeRepositoryCommand extends Command
     /**
      * @return array{namespace: string, class: string}
      */
-    private function generateDto(string $repositoryName): array
+    private function generateDto(string $repositoryName, string $modelClass): array
     {
         $dtoBasePath = $this->dtoPath();
         $dtoNamespace = $this->dtoNamespace();
@@ -329,9 +334,27 @@ class MakeRepositoryCommand extends Command
 
         $this->files->ensureDirectoryExists($dtoBasePath);
 
-        $this->files->put($dtoPath, $this->buildStub('dto.stub', [
+        $fields = $this->dtoFieldsFromModel($modelClass);
+        $stub = $this->dtoStub($fields);
+        $attributesProperty = '__dtoAttributes';
+
+        while (array_key_exists($attributesProperty, $fields)) {
+            $attributesProperty = '_'.$attributesProperty;
+        }
+
+        $this->files->put($dtoPath, $this->buildStub($stub, [
             '{{ namespace }}' => $dtoNamespace,
             '{{ dto }}' => $dto,
+            '{{ properties }}' => collect($fields)
+                ->map(fn (string $type, string $field): string => "    public readonly {$type} \${$field};")
+                ->implode("\n\n"),
+            '{{ attributesProperty }}' => $attributesProperty,
+            '{{ allowedFields }}' => collect(array_keys($fields))
+                ->map(fn (string $field): string => "            '{$field}' => true,")
+                ->implode("\n"),
+            '{{ propertyAssignments }}' => collect(array_keys($fields))
+                ->map(fn (string $field): string => "        \$this->{$field} = \$this->{$attributesProperty}['{$field}'] ?? null;")
+                ->implode("\n"),
         ]));
 
         $this->components->info($repositoryName.' DTO created successfully.');
@@ -341,6 +364,73 @@ class MakeRepositoryCommand extends Command
             'namespace' => $dtoNamespace,
             'class' => $dto,
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function dtoFieldsFromModel(string $modelClass): array
+    {
+        if (! class_exists($modelClass) || ! is_subclass_of($modelClass, Model::class)) {
+            return [];
+        }
+
+        try {
+            /** @var Model $model */
+            $model = new $modelClass;
+            $casts = $model->getCasts();
+
+            return collect($model->getFillable())
+                ->filter(fn (mixed $field): bool => is_string($field)
+                    && $field !== 'this'
+                    && preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $field) === 1)
+                ->unique()
+                ->mapWithKeys(fn (string $field): array => [
+                    $field => $this->dtoPropertyType($casts[$field] ?? null),
+                ])
+                ->all();
+        } catch (Throwable) {
+            return [];
+        }
+    }
+
+    private function dtoPropertyType(mixed $cast): string
+    {
+        if (! is_string($cast)) {
+            return 'mixed';
+        }
+
+        $cast = strtolower(Str::before($cast, ':'));
+
+        return match ($cast) {
+            'int', 'integer' => '?int',
+            'real', 'float', 'double' => '?float',
+            'bool', 'boolean' => '?bool',
+            'string' => '?string',
+            'array', 'json' => '?array',
+            default => 'mixed',
+        };
+    }
+
+    /**
+     * @param  array<string, string>  $fields
+     */
+    private function dtoStub(array $fields): string
+    {
+        if ($fields === []) {
+            return 'dto.stub';
+        }
+
+        $publishedStubs = $this->resolvePath(
+            config('repository-pattern.paths.stubs', resource_path('stubs/vendor/repository-pattern'))
+        );
+
+        if ($this->files->exists($publishedStubs.DIRECTORY_SEPARATOR.'dto.stub')
+            && ! $this->files->exists($publishedStubs.DIRECTORY_SEPARATOR.'dtoFields.stub')) {
+            return 'dto.stub';
+        }
+
+        return 'dtoFields.stub';
     }
 
     private function publishConfig(): void

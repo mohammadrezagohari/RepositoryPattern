@@ -4,6 +4,7 @@ namespace {{ namespace }};
 
 use {{ dtoClass }};
 use {{ repositoryInterfaceClass }};
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,26 +21,34 @@ class {{ service }} implements {{ interface }}
         int $perPage = 15,
         int $page = 1
     ): LengthAwarePaginator {
-        $query = $this->{{ repositoryVariable }}->query();
+        return $this->{{ repositoryVariable }}->paginate(
+            perPage: $perPage,
+            page: $page,
+            relations: $relations,
+            sortBy: $sortBy,
+            sortDirection: $sortDirection
+        );
+    }
 
-        if ($relations !== []) {
-            $query->with($relations);
-        }
-
-        if ($sortBy !== null) {
-            $query->orderBy($sortBy, strtolower($sortDirection) === 'desc' ? 'desc' : 'asc');
-        }
-
-        return $query->paginate($perPage, ['*'], 'page', $page);
+    public function bigDataPaginate(
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc',
+        int $perPage = 100,
+        ?string $cursor = null
+    ): CursorPaginator {
+        return $this->{{ repositoryVariable }}->bigDataPaginate(
+            perPage: $perPage,
+            cursor: $cursor,
+            relations: $relations,
+            sortBy: $sortBy,
+            sortDirection: $sortDirection
+        );
     }
 
     public function find(int|string $id, array $relations = []): ?Model
     {
-        $query = $relations === []
-            ? $this->{{ repositoryVariable }}->query()
-            : $this->{{ repositoryVariable }}->withRelations($relations);
-
-        return $query->find($id);
+        return $this->{{ repositoryVariable }}->findById($id, relations: $relations);
     }
 
     public function create({{ dto }}|array $data): Model

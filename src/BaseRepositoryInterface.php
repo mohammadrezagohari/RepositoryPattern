@@ -2,6 +2,7 @@
 
 namespace Gohari\RepositoryPattern;
 
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -13,9 +14,25 @@ interface BaseRepositoryInterface
 
     public function getAll(array $columns = ['*']): Collection;
 
-    public function paginate(int $perPage = 15, array $columns = ['*'], int $page = 1): LengthAwarePaginator;
+    public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        int $page = 1,
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc'
+    ): LengthAwarePaginator;
 
-    public function findById(int|string $id, array $columns = ['*']): ?Model;
+    public function bigDataPaginate(
+        int $perPage = 100,
+        array $columns = ['*'],
+        ?string $cursor = null,
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc'
+    ): CursorPaginator;
+
+    public function findById(int|string $id, array $columns = ['*'], array $relations = []): ?Model;
 
     public function firstWhere(string $column, mixed $value): ?Model;
 

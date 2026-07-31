@@ -1,0 +1,30 @@
+<?php
+
+namespace {{ namespace }};
+
+class {{ dto }}
+{
+{{ properties }}
+
+    /** @var array<string, mixed> */
+    private readonly array ${{ attributesProperty }};
+
+    public function __construct(array $attributes)
+    {
+        $this->{{ attributesProperty }} = array_intersect_key($attributes, [
+{{ allowedFields }}
+        ]);
+
+{{ propertyAssignments }}
+    }
+
+    public static function fromArray(array $attributes): self
+    {
+        return new self($attributes);
+    }
+
+    public function toArray(): array
+    {
+        return $this->{{ attributesProperty }};
+    }
+}

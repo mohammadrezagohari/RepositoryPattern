@@ -3,10 +3,13 @@
 namespace Gohari\RepositoryPattern\Tests\Feature;
 
 use Gohari\RepositoryPattern\Tests\Fixtures\CommandUser;
+use Gohari\RepositoryPattern\Tests\Fixtures\DtoUser;
 use Gohari\RepositoryPattern\Tests\TestCase;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
+use ReflectionMethod;
+use ReflectionProperty;
 
 class MakeRepositoryCommandTest extends TestCase
 {
@@ -146,6 +149,8 @@ PHP);
         $this->assertFileExists($configPath);
 
         $serviceContents = $this->files->get($servicePath);
+        $serviceInterfaceContents = $this->files->get($serviceInterfacePath);
+        $dtoContents = $this->files->get($dtoPath);
         $providerContents = $this->files->get($providerPath);
 
         $this->assertStringContainsString('class CommandUserService implements CommandUserServiceInterface', $serviceContents);
@@ -154,10 +159,56 @@ PHP);
         $this->assertStringContainsString('function paginate(', $serviceContents);
         $this->assertStringContainsString('int $perPage = 15,', $serviceContents);
         $this->assertStringContainsString('int $page = 1', $serviceContents);
-        $this->assertStringContainsString("paginate(\$perPage, ['*'], 'page', \$page)", $serviceContents);
+        $this->assertStringContainsString('->paginate(', $serviceContents);
+        $this->assertStringContainsString('function bigDataPaginate(', $serviceContents);
+        $this->assertStringContainsString('): CursorPaginator', $serviceInterfaceContents);
+        $this->assertStringContainsString('->bigDataPaginate(', $serviceContents);
+        $this->assertStringContainsString('findById($id, relations: $relations)', $serviceContents);
+        $this->assertStringNotContainsString('$query', $serviceContents);
+        $this->assertStringNotContainsString('->query()', $serviceContents);
         $this->assertStringContainsString('function restore(int|string $id): bool', $serviceContents);
+        $this->assertStringContainsString('__construct(private readonly array $attributes)', $dtoContents);
+        $this->assertStringNotContainsString('public readonly mixed $name', $dtoContents);
         $this->assertStringContainsString('\App\Services\CommandUserServiceInterface::class', $providerContents);
         $this->assertStringContainsString('\App\Services\CommandUserService::class', $providerContents);
+    }
+
+    public function test_it_generates_dto_fields_from_model_fillable_and_casts(): void
+    {
+        $this->artisan('repository:make', [
+            'name' => 'DtoUser',
+            '--model' => DtoUser::class,
+            '--dto' => true,
+        ])->assertSuccessful();
+
+        $dtoPath = base_path('app/DTOs/DtoUserData.php');
+        $dtoContents = $this->files->get($dtoPath);
+
+        $this->assertStringContainsString('public readonly mixed $name;', $dtoContents);
+        $this->assertStringContainsString('public readonly ?int $age;', $dtoContents);
+        $this->assertStringContainsString('public readonly ?bool $is_active;', $dtoContents);
+        $this->assertStringContainsString('public readonly ?array $settings;', $dtoContents);
+        $this->assertStringContainsString("'name' => true", $dtoContents);
+        $this->assertStringContainsString("\$this->name = \$this->__dtoAttributes['name'] ?? null;", $dtoContents);
+
+        require_once $dtoPath;
+
+        $dtoClass = 'App\\DTOs\\DtoUserData';
+        $dto = (new ReflectionMethod($dtoClass, 'fromArray'))->invoke(null, [
+            'name' => null,
+            'age' => 42,
+            'is_active' => true,
+            'extra' => 'ignored',
+        ]);
+        $payload = (new ReflectionMethod($dtoClass, 'toArray'))->invoke($dto);
+
+        $this->assertSame([
+            'name' => null,
+            'age' => 42,
+            'is_active' => true,
+        ], $payload);
+        $this->assertSame(42, (new ReflectionProperty($dtoClass, 'age'))->getValue($dto));
+        $this->assertNull((new ReflectionProperty($dtoClass, 'settings'))->getValue($dto));
     }
 
     public function test_it_uses_configured_paths_and_namespaces_by_default(): void
@@ -202,6 +253,34 @@ PHP);
         $this->assertStringContainsString(
             'custom published repository stub',
             $this->files->get(base_path('tests/Fixtures/Generated/CommandUserRepository.php'))
+        );
+    }
+
+    public function test_it_preserves_a_published_generic_dto_stub(): void
+    {
+        $stubPath = resource_path('stubs/vendor/repository-pattern/dto.stub');
+
+        $this->files->ensureDirectoryExists(dirname($stubPath));
+        $this->files->put($stubPath, <<<'PHP'
+<?php
+
+namespace {{ namespace }};
+
+// custom published DTO stub
+class {{ dto }}
+{
+}
+PHP);
+
+        $this->artisan('repository:make', [
+            'name' => 'DtoUser',
+            '--model' => DtoUser::class,
+            '--dto' => true,
+        ])->assertSuccessful();
+
+        $this->assertStringContainsString(
+            'custom published DTO stub',
+            $this->files->get(base_path('app/DTOs/DtoUserData.php'))
         );
     }
 

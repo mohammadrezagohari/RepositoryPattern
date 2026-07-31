@@ -2,6 +2,7 @@
 
 namespace Gohari\RepositoryPattern;
 
+use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,14 +25,47 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->query()->get($columns);
     }
 
-    public function paginate(int $perPage = 15, array $columns = ['*'], int $page = 1): LengthAwarePaginator
-    {
-        return $this->query()->paginate($perPage, $columns, 'page', $page);
+    public function paginate(
+        int $perPage = 15,
+        array $columns = ['*'],
+        int $page = 1,
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc'
+    ): LengthAwarePaginator {
+        return $this->paginationQuery($relations, $sortBy, $sortDirection)
+            ->paginate($perPage, $columns, 'page', $page);
     }
 
-    public function findById(int|string $id, array $columns = ['*']): ?Model
+    public function bigDataPaginate(
+        int $perPage = 100,
+        array $columns = ['*'],
+        ?string $cursor = null,
+        array $relations = [],
+        ?string $sortBy = null,
+        string $sortDirection = 'asc'
+    ): CursorPaginator {
+        $direction = $this->normalizeSortDirection($sortDirection);
+        $key = $this->model->getQualifiedKeyName();
+        $query = $this->paginationQuery($relations, $sortBy, $direction);
+
+        if ($sortBy === null) {
+            $query->orderBy($key, $direction);
+        } elseif (! in_array($sortBy, [$this->model->getKeyName(), $key], true)) {
+            $query->orderBy($key, $direction);
+        }
+
+        return $query->cursorPaginate(
+            $perPage,
+            $columns,
+            'cursor',
+            $cursor
+        );
+    }
+
+    public function findById(int|string $id, array $columns = ['*'], array $relations = []): ?Model
     {
-        return $this->query()->find($id, $columns);
+        return $this->queryWithRelations($relations)->find($id, $columns);
     }
 
     public function firstWhere(string $column, mixed $value): ?Model
@@ -193,5 +227,31 @@ class BaseRepository implements BaseRepositoryInterface
         $repository->query = $query;
 
         return $repository;
+    }
+
+    private function paginationQuery(
+        array $relations,
+        ?string $sortBy,
+        string $sortDirection
+    ): Builder {
+        $query = $this->queryWithRelations($relations);
+
+        if ($sortBy !== null) {
+            $query->orderBy($sortBy, $this->normalizeSortDirection($sortDirection));
+        }
+
+        return $query;
+    }
+
+    private function queryWithRelations(array $relations): Builder
+    {
+        $query = $this->query();
+
+        return $relations === [] ? $query : $query->with($relations);
+    }
+
+    private function normalizeSortDirection(string $direction): string
+    {
+        return strtolower($direction) === 'desc' ? 'desc' : 'asc';
     }
 }
